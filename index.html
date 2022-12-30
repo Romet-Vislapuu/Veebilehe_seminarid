@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="et">
+  <head>
+    <style>
+      .grid-container {
+        display: grid;
+        grid-template-columns: auto auto auto;
+      }
+      .grid-container img {
+        height: 100px;
+        width: 100px;
+      }
+    </style>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <title>Lehe päis</title>
+    <script data-name="TokenSigning" data-by="Web-eID extension">
+      (function pageScript() {
+        let hasDeprecationWarningDisplayed = false;
+        const eidPromises = {};
+        window.addEventListener(
+          "message",
+          function (event) {
+            if (event.source !== window) return;
+            if (event.data.src && event.data.src === "background.js") {
+              console.log("Page received: ");
+              console.log(event.data);
+              if (event.data.nonce) {
+                const p = eidPromises[event.data.nonce];
+                if (event.data.result === "ok") {
+                  if (event.data.signature !== undefined) {
+                    p.resolve({ hex: event.data.signature });
+                  } else if (event.data.version !== undefined) {
+                    p.resolve(event.data.extension + "/" + event.data.version);
+                  } else if (event.data.cert !== undefined) {
+                    p.resolve({ hex: event.data.cert });
+                  } else {
+                    console.log("No idea how to handle message");
+                    console.log(event.data);
+                  }
+                } else {
+                  p.reject(new Error(event.data.result));
+                }
+                delete eidPromises[event.data.nonce];
+              } else {
+                console.log("No nonce in event msg");
+              }
+            }
+          },
+          false
+        );
+        function nonce() {
+          let val = "";
+          const hex = "abcdefghijklmnopqrstuvwxyz0123456789";
+          for (let i = 0; i < 16; i++)
+            val += hex.charAt(Math.floor(Math.random() * hex.length));
+          return val;
+        }
+        function messagePromise(msg) {
+          if (!hasDeprecationWarningDisplayed) {
+            console.warn(
+              "TokenSigning API is deprecated. Please consider switching to the new Web-eID library."
+            );
+            hasDeprecationWarningDisplayed = true;
+          }
+          return new Promise(function (resolve, reject) {
+            window.postMessage(msg, "*");
+            eidPromises[msg.nonce] = { resolve, reject };
+          });
+        }
+        window.TokenSigning = class TokenSigning {
+          getCertificate(options) {
+            const msg = {
+              src: "page.js",
+              nonce: nonce(),
+              type: "CERT",
+              lang: options.lang,
+              filter: options.filter,
+            };
+            console.log("getCertificate()");
+            return messagePromise(msg);
+          }
+          sign(cert, hash, options) {
+            const msg = {
+              src: "page.js",
+              nonce: nonce(),
+              type: "SIGN",
+              cert: cert.hex,
+              hash: hash.hex,
+              hashtype: hash.type,
+              lang: options.lang,
+              info: options.info,
+            };
+            console.log("sign()");
+            return messagePromise(msg);
+          }
+          getVersion() {
+            const msg = {
+              src: "page.js",
+              nonce: nonce(),
+              type: "VERSION",
+            };
+            console.log("getVersion()");
+            return messagePromise(msg);
+          }
+        };
+      })();
+    </script>
+  </head>
+  <body>
+    <h1>Eiffeli torn</h1>
+    <p>
+      Eiffeli torn on 273-330 m torn Pariisis. Sellel lehelt leiab infot selle
+      võimsa vaatamisväärsuse kohta
+    </p>
+    <br />
+    <a href="https://en.wikipedia.org/wiki/Eiffel_Tower" target="_blank"
+      >Pikemalt saab sellest lugeda sellel lehelt</a
+    >
+    <img
+      src="Tour_Eiffel_Wikimedia_Commons.jpg"
+      alt=""
+      width="500"
+      height="1000"
+      style="display: block"
+    />
+    <h2>Miks on Eiffeli torn äge:</h2>
+    <ul>
+      <li>Suur</li>
+      <li>Kuni 1930. a oli ta maailma kõrgeim ehitis</li>
+      <li>Ehitusel suri ainult üks inimene</li>
+      <li>
+        <ul>
+          <li>Kasutati selle aja kohta väga korralike turvameetmeid</li>
+        </ul>
+      </li>
+      <li>Ehitatud ainult kahe aastaga</li>
+    </ul>
+    <div class="grid-container">
+      <div><img src="pilt1.JPG" alt="" /></div>
+      <div><img src="pilt2.JPG" alt="" /></div>
+      <div><img src="pilt3.JPG" alt="" /></div>
+      <div><img src="pilt4.JPG" alt="" /></div>
+      <div><img src="pilt5.JPG" alt="" /></div>
+      <div><img src="pilt6.JPG" alt="" /></div>
+    </div>
+    <a href="gustave.html">Torni arhitekti kohta võib lähedamalt lugeda siit</a>
+  </body>
+</html>
